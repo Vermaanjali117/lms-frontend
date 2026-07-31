@@ -1,0 +1,102 @@
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">My Progress</h2>
+        <p class="text-gray-500 mt-1">Track your learning journey</p>
+    </div>
+
+    @if (isLoading()) {
+        <div class="flex justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+        </div>
+    } @else {
+
+        <!-- Overview Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
+                <h3 class="text-4xl font-bold">{{ enrollments().length }}</h3>
+                <p class="text-indigo-200 mt-1">Total Courses</p>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white">
+                <h3 class="text-4xl font-bold">{{ totalCompleted() }}</h3>
+                <p class="text-emerald-200 mt-1">Completed</p>
+            </div>
+            <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white">
+                <h3 class="text-4xl font-bold">{{ averageProgress() }}%</h3>
+                <p class="text-amber-200 mt-1">Average Progress</p>
+            </div>
+        </div>
+
+        <!-- Progress List -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-6">Course Progress</h3>
+
+            @if (enrollments().length === 0) {
+                <div class="text-center py-12">
+                    <span class="text-5xl">📈</span>
+                    <p class="text-gray-500 mt-4">No courses enrolled yet!</p>
+                    <a routerLink="/dashboard/student/courses"
+                       class="mt-4 inline-block px-6 py-2 bg-indigo-600 text-white rounded-xl">
+                        Browse Courses
+                    </a>
+                </div>
+            } @else {
+                <div class="space-y-6">
+                    @for (enrollment of enrollments(); track enrollment._id) {
+                        <div class="border border-gray-100 rounded-xl p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                                        @if (enrollment.course?.thumbnail) {
+                                            <img [src]="enrollment.course.thumbnail"
+                                                 class="w-full h-full object-cover rounded-xl"/>
+                                        } @else {
+                                            <span>📚</span>
+                                        }
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">
+                                            {{ enrollment.course?.title }}
+                                        </h4>
+                                        <p class="text-xs text-gray-500">
+                                            {{ enrollment.completedLessons?.length || 0 }} lessons completed
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Status Badge -->
+                                @if (enrollment.isCompleted) {
+                                    <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
+                                        Completed ✅
+                                    </span>
+                                } @else {
+                                    <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">
+                                        {{ enrollment.progress }}% Done
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-gray-100 rounded-full h-3">
+                                <div
+                                    class="h-3 rounded-full transition-all duration-500"
+                                    [class]="getProgressColor(enrollment.progress)"
+                                    [style.width.%]="enrollment.progress">
+                                </div>
+                            </div>
+
+                            <!-- Continue Button -->
+                            @if (!enrollment.isCompleted) {
+                                <a [routerLink]="['/dashboard/student/courses', enrollment.course?._id]"
+                                   class="mt-3 inline-block text-sm text-indigo-600 font-medium hover:underline">
+                                    Continue Learning →
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

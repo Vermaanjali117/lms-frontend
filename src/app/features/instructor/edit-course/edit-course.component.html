@@ -1,0 +1,238 @@
+<div class="space-y-6">
+
+    @if (isLoading()) {
+    <div class="flex justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    } @else if (course()) {
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a routerLink="/instructor/dashboard" class="p-2 rounded-xl hover:bg-gray-100 transition text-xl">←</a>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">{{ course().title }}</h2>
+                <span class="text-xs font-semibold px-3 py-1 rounded-full capitalize mt-1 inline-block"
+                    [class]="getStatusClass(course().status)">
+                    {{ course().status }}
+                </span>
+            </div>
+        </div>
+        @if (canSubmit()) {
+        <button (click)="submitForReview()"
+            class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition">
+            Submit for Review 🚀
+        </button>
+        }
+    </div>
+
+    <!-- Stats -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+                <p class="text-2xl font-bold text-indigo-600">{{ course().sections?.length || 0 }}</p>
+                <p class="text-gray-500 text-sm">Sections</p>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-indigo-600">{{ getTotalLessons() }}</p>
+                <p class="text-gray-500 text-sm">Lessons</p>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-indigo-600">
+                    {{ course().price === 0 ? 'Free' : '₹' + course().price }}
+                </p>
+                <p class="text-gray-500 text-sm">Price</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Content -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold text-gray-800">Course Content</h3>
+            <button (click)="showSectionForm.set(!showSectionForm())"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition">
+                ➕ Add Section
+            </button>
+        </div>
+
+        <!-- Section Form -->
+        @if (showSectionForm()) {
+        <div class="bg-indigo-50 rounded-xl p-4 mb-6">
+            <form [formGroup]="sectionForm" class="flex gap-3">
+                <input formControlName="title" type="text" placeholder="e.g. Module 1 - Introduction"
+                    class="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white" />
+                <button type="button" (click)="addSection()" [disabled]="isSaving()"
+                    class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl disabled:opacity-50">
+                    @if (isSaving()) { Saving... } @else { Add }
+                </button>
+                <button type="button" (click)="showSectionForm.set(false)"
+                    class="px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-600">
+                    Cancel
+                </button>
+            </form>
+        </div>
+        }
+
+        <!-- Sections List -->
+        @if (course().sections?.length === 0) {
+        <div class="text-center py-12 text-gray-500">
+            <span class="text-4xl">📂</span>
+            <p class="mt-3">No sections yet! Add your first section.</p>
+        </div>
+        } @else {
+        <div class="space-y-4">
+            @for (section of course().sections; track section._id) {
+            <div class="border border-gray-200 rounded-xl overflow-hidden">
+
+                <!-- Section Header -->
+                <div class="flex items-center justify-between p-4 bg-gray-50">
+                    <div class="flex items-center gap-3">
+                        <span class="text-indigo-600">📂</span>
+                        <span class="font-semibold text-gray-800">{{ section.title }}</span>
+                        <span class="text-xs text-gray-500">{{ section.lessons?.length }} lessons</span>
+                    </div>
+                    <button (click)="toggleLessonForm(section._id)"
+                        class="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 font-medium">
+                        ➕ Add Lesson
+                    </button>
+                </div>
+
+                <!-- Add Lesson Form -->
+                @if (showLessonForm() === section._id) {
+                <div class="p-4 bg-blue-50 border-t border-gray-200">
+                    <h5 class="font-semibold text-gray-800 mb-3">Add New Lesson</h5>
+                    <form [formGroup]="lessonForm" class="space-y-3">
+
+                        <input formControlName="title" type="text" placeholder="Lesson title"
+                            class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white" />
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <select formControlName="type" (change)="onLessonTypeChange()"
+                                class="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white">
+                                <option value="video">🎥 Video</option>
+                                <option value="text">📄 Text</option>
+                            </select>
+                            <input formControlName="duration" type="number" placeholder="Duration (mins)"
+                                class="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white" />
+                        </div>
+
+                        <!-- Video Content -->
+                        @if (lessonForm.get('type')?.value === 'video') {
+                        <div class="bg-white border-2 border-gray-200 rounded-xl p-4 space-y-3">
+                            <p class="text-sm font-semibold text-gray-700">Video Content:</p>
+
+                            <!-- YouTube URL -->
+                            <div>
+                                <label class="text-xs text-gray-500 mb-1 block">
+                                    Option 1: YouTube/Video URL
+                                </label>
+                                <input formControlName="content" type="text"
+                                    placeholder="https://youtube.com/watch?v=..."
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 text-sm bg-white" />
+                            </div>
+
+                            <!-- Divider -->
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-px bg-gray-200"></div>
+                                <span class="text-xs text-gray-400">OR</span>
+                                <div class="flex-1 h-px bg-gray-200"></div>
+                            </div>
+
+                            <!-- Upload Video -->
+                            <div>
+                                <label class="text-xs text-gray-500 mb-1 block">
+                                    Option 2: Upload Video (max 100MB)
+                                </label>
+
+                                @if (!uploadedVideoUrl()) {
+                                <label
+                                    class="cursor-pointer flex items-center gap-3 px-4 py-3 border-2 border-dashed border-indigo-300 rounded-xl hover:bg-indigo-50 transition">
+                                    <span class="text-2xl">🎥</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-indigo-600">Click to upload video</p>
+                                        <p class="text-xs text-gray-500">MP4, MOV up to 100MB</p>
+                                    </div>
+                                    <input type="file" accept="video/*" class="hidden" (change)="uploadVideo($event)" />
+                                </label>
+                                }
+
+                                @if (isUploadingVideo()) {
+                                <div class="mt-2">
+                                    <p class="text-xs text-gray-500 mb-1">Uploading to Cloudinary...</p>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-indigo-600 h-2 rounded-full animate-pulse w-full"></div>
+                                    </div>
+                                </div>
+                                }
+
+                                @if (uploadedVideoUrl()) {
+                                <div
+                                    class="mt-2 flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                                    <span class="text-emerald-600 text-xl">✅</span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-emerald-700">Video uploaded!</p>
+                                        <p class="text-xs text-gray-500 truncate">{{ uploadedVideoUrl() }}</p>
+                                    </div>
+                                    <button type="button"
+                                        (click)="uploadedVideoUrl.set(''); lessonForm.patchValue({content: ''})"
+                                        class="text-gray-400 hover:text-red-500">✕</button>
+                                </div>
+                                }
+                            </div>
+                        </div>
+                        } @else {
+                        <!-- Text Content -->
+                        <textarea formControlName="content" placeholder="Enter lesson text content..." rows="4"
+                            class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white resize-none">
+                                            </textarea>
+                        }
+
+                        <!-- Free Preview -->
+                        <div class="flex items-center gap-2">
+                            <input formControlName="isPreview" type="checkbox" class="w-4 h-4 text-indigo-600" />
+                            <label class="text-sm text-gray-700">Free Preview</label>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex gap-3">
+                            <button type="button" (click)="addLesson(section._id)"
+                                [disabled]="isSaving() || isUploadingVideo()"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm disabled:opacity-50">
+                                @if (isSaving()) { Saving... } @else { Add Lesson }
+                            </button>
+                            <button type="button" (click)="showLessonForm.set(null)"
+                                class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm text-gray-600">
+                                Cancel
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+                }
+
+                <!-- Lessons List -->
+                @if (section.lessons?.length > 0) {
+                <div class="divide-y divide-gray-100">
+                    @for (lesson of section.lessons; track lesson._id) {
+                    <div class="flex items-center gap-3 px-4 py-3">
+                        <span>{{ lesson.type === 'video' ? '🎥' : '📄' }}</span>
+                        <span class="flex-1 text-sm text-gray-700">{{ lesson.title }}</span>
+                        @if (lesson.isPreview) {
+                        <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                            Preview
+                        </span>
+                        }
+                        <span class="text-xs text-gray-500">{{ lesson.duration }} min</span>
+                    </div>
+                    }
+                </div>
+                }
+
+            </div>
+            }
+        </div>
+        }
+    </div>
+    }
+</div>

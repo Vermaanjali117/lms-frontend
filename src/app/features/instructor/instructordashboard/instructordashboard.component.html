@@ -1,0 +1,147 @@
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Instructor Dashboard</h2>
+            <p class="text-gray-500 mt-1">Manage your courses and track performance</p>
+        </div>
+        <a routerLink="/instructor/create-course"
+            class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition flex items-center gap-2">
+            ➕ Create Course
+        </a>
+    </div>
+
+    @if (isLoading()) {
+    <div class="flex justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    } @else {
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-3xl">📚</span>
+                <span class="bg-indigo-50 text-indigo-600 text-xs font-semibold px-3 py-1 rounded-full">Total</span>
+            </div>
+            <h3 class="text-3xl font-bold text-gray-800">{{ totalCourses() }}</h3>
+            <p class="text-gray-500 text-sm mt-1">Total Courses</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-3xl">✅</span>
+                <span class="bg-emerald-50 text-emerald-600 text-xs font-semibold px-3 py-1 rounded-full">Live</span>
+            </div>
+            <h3 class="text-3xl font-bold text-gray-800">{{ publishedCourses() }}</h3>
+            <p class="text-gray-500 text-sm mt-1">Published</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-3xl">⏳</span>
+                <span class="bg-amber-50 text-amber-600 text-xs font-semibold px-3 py-1 rounded-full">Review</span>
+            </div>
+            <h3 class="text-3xl font-bold text-gray-800">{{ pendingCourses() }}</h3>
+            <p class="text-gray-500 text-sm mt-1">Pending Review</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-3xl">👥</span>
+                <span class="bg-purple-50 text-purple-600 text-xs font-semibold px-3 py-1 rounded-full">All</span>
+            </div>
+            <h3 class="text-3xl font-bold text-gray-800">{{ totalStudents() }}</h3>
+            <p class="text-gray-500 text-sm mt-1">Total Students</p>
+        </div>
+
+    </div>
+
+    <!-- Courses Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold text-gray-800">My Courses</h3>
+            <a routerLink="/instructor/my-courses" class="text-indigo-600 text-sm font-medium hover:underline">
+                View All →
+            </a>
+        </div>
+
+        @if (courses().length === 0) {
+        <div class="text-center py-12">
+            <span class="text-5xl">📚</span>
+            <p class="text-gray-500 mt-4">No courses yet!</p>
+            <a routerLink="/instructor/create-course"
+                class="mt-4 inline-block px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+                Create Your First Course
+            </a>
+        </div>
+        } @else {
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-100">
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3 pr-4">Course</th>
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3 pr-4">Status</th>
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3 pr-4">Students</th>
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3 pr-4">Price</th>
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    @for (course of courses(); track course._id) {
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="py-4 pr-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    @if (course.thumbnail) {
+                                    <img [src]="course.thumbnail" class="w-full h-full object-cover" />
+                                    } @else {
+                                    <span>📚</span>
+                                    }
+                                </div>
+                                <span class="font-medium text-gray-800 text-sm line-clamp-1">
+                                    {{ course.title }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="py-4 pr-4">
+                            <span class="text-xs font-semibold px-3 py-1 rounded-full capitalize"
+                                [class]="getStatusClass(course.status)">
+                                {{ course.status }}
+                            </span>
+                        </td>
+                        <td class="py-4 pr-4 text-sm text-gray-600">
+                            {{ course.totalStudents }}
+                        </td>
+                        <td class="py-4 pr-4 text-sm font-semibold text-indigo-600">
+                            @if (course.price === 0) { Free }
+                            @else { ₹{{ course.price }} }
+                        </td>
+                        <td class="py-4">
+                            <div class="flex gap-2">
+                                <a [routerLink]="['/instructor/courses', course._id, 'edit']"
+                                    class="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition font-medium">
+                                    Edit ✏️
+                                </a>
+                                @if (course.status === 'draft' || course.status === 'rejected') {
+                                <button
+                                    class="text-xs px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition font-medium">
+                                    Submit 🚀
+                                </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </div>
+
+    }
+
+</div>

@@ -1,0 +1,103 @@
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">My Enrollments</h2>
+        <p class="text-gray-500 mt-1">{{ enrollments().length }} courses enrolled</p>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="flex gap-2">
+        <button (click)="setFilter('all')" class="px-4 py-2 rounded-xl font-medium text-sm transition"
+            [class.bg-indigo-600]="filter() === 'all'" [class.text-white]="filter() === 'all'"
+            [class.bg-white]="filter() !== 'all'" [class.text-gray-600]="filter() !== 'all'">
+            All ({{ enrollments().length }})
+        </button>
+        <button (click)="setFilter('inprogress')" class="px-4 py-2 rounded-xl font-medium text-sm transition"
+            [class.bg-indigo-600]="filter() === 'inprogress'" [class.text-white]="filter() === 'inprogress'"
+            [class.bg-white]="filter() !== 'inprogress'" [class.text-gray-600]="filter() !== 'inprogress'">
+            In Progress
+        </button>
+        <button (click)="setFilter('completed')" class="px-4 py-2 rounded-xl font-medium text-sm transition"
+            [class.bg-indigo-600]="filter() === 'completed'" [class.text-white]="filter() === 'completed'"
+            [class.bg-white]="filter() !== 'completed'" [class.text-gray-600]="filter() !== 'completed'">
+            Completed
+        </button>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+    <div class="flex justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    } @else {
+
+    @if (filteredEnrollments().length === 0) {
+    <div class="text-center py-20 bg-white rounded-2xl">
+        <span class="text-5xl">📚</span>
+        <p class="text-gray-500 mt-4">No courses found!</p>
+        <a routerLink="/dashboard/student/courses"
+            class="mt-4 inline-block px-6 py-2 bg-indigo-600 text-white rounded-xl">
+            Browse Courses
+        </a>
+    </div>
+    } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (enrollment of filteredEnrollments(); track enrollment._id) {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+            <!-- Thumbnail -->
+            <div class="h-40 bg-gradient-to-br from-indigo-100 to-purple-100 relative">
+                @if (enrollment.course?.thumbnail) {
+                <img [src]="enrollment.course.thumbnail" class="w-full h-full object-cover" />
+                } @else {
+                <div class="w-full h-full flex items-center justify-center">
+                    <span class="text-4xl">📚</span>
+                </div>
+                }
+                <!-- Badge -->
+                @if (enrollment.isCompleted) {
+                <div class="absolute top-3 right-3 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                    Completed ✅
+                </div>
+                }
+            </div>
+
+            <!-- Content -->
+            <div class="p-5">
+                <h3 class="font-bold text-gray-800 truncate">
+                    {{ enrollment.course?.title }}
+                </h3>
+
+                <!-- Progress -->
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>Progress</span>
+                        <span>{{ enrollment.progress }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="h-2 rounded-full transition-all" [class.bg-emerald-500]="enrollment.isCompleted"
+                            [class.bg-indigo-600]="!enrollment.isCompleted" [style.width.%]="enrollment.progress">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 mt-4">
+                    <a [routerLink]="['/student/learn', enrollment.course?._id]"
+                        class="flex-1 text-center py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition">
+                        @if (enrollment.isCompleted) {
+                        Review 📖
+                        } @else {
+                        Continue →
+                        }
+                    </a>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+    }
+    }
+
+</div>

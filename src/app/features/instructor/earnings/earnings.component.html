@@ -1,0 +1,103 @@
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">My Earnings</h2>
+        <p class="text-gray-500 mt-1">Track your revenue and sales</p>
+    </div>
+
+    @if (isLoading()) {
+    <div class="flex justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    } @else {
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
+            <span class="text-3xl">💰</span>
+            <h3 class="text-3xl font-bold mt-3">₹{{ totalEarnings() }}</h3>
+            <p class="text-indigo-200 mt-1">Total Revenue</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white">
+            <span class="text-3xl">🏦</span>
+            <h3 class="text-3xl font-bold mt-3">₹{{ netEarnings() }}</h3>
+            <p class="text-emerald-200 mt-1">Your Earnings (70%)</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white">
+            <span class="text-3xl">🏢</span>
+            <h3 class="text-3xl font-bold mt-3">₹{{ platformCommission() }}</h3>
+            <p class="text-amber-200 mt-1">Platform Fee (30%)</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl p-6 text-white">
+            <span class="text-3xl">🛒</span>
+            <h3 class="text-3xl font-bold mt-3">{{ totalSales() }}</h3>
+            <p class="text-blue-200 mt-1">Total Sales</p>
+        </div>
+
+    </div>
+
+    <!-- Transactions -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-6">Transaction History</h3>
+
+        @if (payments().length === 0) {
+        <div class="text-center py-12">
+            <span class="text-5xl">💳</span>
+            <p class="text-gray-500 mt-4">No transactions yet!</p>
+            <p class="text-gray-400 text-sm mt-2">
+                Start selling courses to see earnings here
+            </p>
+        </div>
+        } @else {
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-100">
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3">Student</th>
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3">Course</th>
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3">Amount</th>
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3">Your Cut</th>
+                        <th class="text-left text-sm font-semibold text-gray-500 pb-3">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    @for (payment of payments(); track payment._id) {
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="py-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600">
+                                    {{ payment.student?.name?.charAt(0) }}
+                                </div>
+                                <span class="text-sm text-gray-700">
+                                    {{ payment.student?.name }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="py-4 text-sm text-gray-600">
+                            {{ payment.course?.title }}
+                        </td>
+                        <td class="py-4 text-sm font-semibold text-gray-800">
+                            ₹{{ payment.amount }}
+                        </td>
+                        <td class="py-4 text-sm font-semibold text-emerald-600">
+                            ₹{{ payment.amount * 0.70 | number:'1.0-0' }}
+                        </td>
+                        <td class="py-4 text-sm text-gray-500">
+                            {{ payment.createdAt | date:'mediumDate' }}
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </div>
+    }
+
+</div>

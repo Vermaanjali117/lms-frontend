@@ -1,0 +1,137 @@
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">Browse Courses</h2>
+        <p class="text-gray-500 mt-1">{{ total() }} courses available</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+            <!-- Search -->
+            <div class="md:col-span-2">
+                <input [formControl]="searchControl" type="text" placeholder="🔍 Search courses..."
+                    class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 transition" />
+            </div>
+
+            <!-- Category -->
+            <select [formControl]="categoryControl"
+                class="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 transition">
+                <option value="">All Categories</option>
+                @for (cat of categories(); track cat._id) {
+                <option [value]="cat._id">{{ cat.name }}</option>
+                }
+            </select>
+
+            <!-- Sort -->
+            <select [formControl]="sortControl"
+                class="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 transition">
+                <option value="createdAt">Latest</option>
+                <option value="price">Price</option>
+                <option value="rating">Rating</option>
+                <option value="totalStudents">Popular</option>
+            </select>
+
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex gap-3 mt-4">
+            <button (click)="applyFilters()"
+                class="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-medium text-sm">
+                Apply Filters
+            </button>
+            <button (click)="clearFilters()"
+                class="px-6 py-2 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-600 text-sm">
+                Clear
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+    <div class="flex justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    } @else {
+
+    @if (courses().length === 0) {
+    <div class="text-center py-20 bg-white rounded-2xl">
+        <span class="text-5xl">🔍</span>
+        <p class="text-gray-500 mt-4 text-lg">No courses found!</p>
+        <button (click)="clearFilters()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl">
+            Clear Filters
+        </button>
+    </div>
+    } @else {
+
+    <!-- Course Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (course of courses(); track course._id) {
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
+
+            <!-- Thumbnail -->
+            <div class="h-44 bg-gradient-to-br from-indigo-100 to-purple-100 relative overflow-hidden">
+                @if (course.thumbnail) {
+                <img [src]="course.thumbnail"
+                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                } @else {
+                <div class="w-full h-full flex items-center justify-center">
+                    <span class="text-5xl">📚</span>
+                </div>
+                }
+                <div class="absolute top-3 right-3">
+                    @if (course.price === 0) {
+                    <span class="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        FREE
+                    </span>
+                    } @else {
+                    <span class="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        ₹{{ course.price }}
+                    </span>
+                    }
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-5">
+                <span class="bg-indigo-50 text-indigo-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                    {{ course.category?.name }}
+                </span>
+                <h3 class="font-bold text-gray-800 mt-2 mb-1 line-clamp-2">
+                    {{ course.title }}
+                </h3>
+                <p class="text-gray-500 text-sm">by {{ course.instructor?.name }}</p>
+
+                <div class="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                    <span>⭐ {{ course.rating || 0 }}</span>
+                    <span>👥 {{ course.totalStudents }}</span>
+                </div>
+
+                <a [routerLink]="['/student/courses', course._id]"
+                    class="mt-4 w-full block text-center bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 transition font-medium text-sm">
+                    View Course →
+                </a>
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+    <div class="flex justify-center gap-2">
+        @for (page of getPagesArray(); track page) {
+        <button (click)="changePage(page)" class="w-10 h-10 rounded-xl font-medium transition"
+            [class.bg-indigo-600]="currentPage() === page" [class.text-white]="currentPage() === page"
+            [class.bg-white]="currentPage() !== page" [class.text-gray-600]="currentPage() !== page">
+            {{ page }}
+        </button>
+        }
+    </div>
+    }
+    }
+    }
+
+</div>

@@ -1,0 +1,197 @@
+<div class="space-y-6">
+
+    @if (isLoading()) {
+    <div class="flex justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    } @else if (course()) {
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 rounded-2xl p-8 text-white">
+        <div class="flex flex-col lg:flex-row gap-8">
+
+            <!-- Course Info -->
+            <div class="flex-1">
+                <span class="bg-white/20 text-white text-xs font-medium px-3 py-1 rounded-full">
+                    {{ course().category?.name }}
+                </span>
+                <h1 class="text-3xl font-bold mt-4 mb-3">
+                    {{ course().title }}
+                </h1>
+                <p class="text-indigo-200 mb-6">
+                    {{ course().description }}
+                </p>
+
+                <!-- Stats -->
+                <div class="flex flex-wrap gap-6 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span>⭐</span>
+                        <span>{{ course().rating || 0 }} rating</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>👥</span>
+                        <span>{{ course().totalStudents }} students</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>📚</span>
+                        <span>{{ getTotalLessons() }} lessons</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>⏱️</span>
+                        <span>{{ getTotalDuration() }} mins</span>
+                    </div>
+                </div>
+
+                <!-- Instructor -->
+                <div class="flex items-center gap-3 mt-6">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                        {{ course().instructor?.name?.charAt(0) }}
+                    </div>
+                    <div>
+                        <p class="font-medium">{{ course().instructor?.name }}</p>
+                        <p class="text-indigo-200 text-sm">Instructor</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollment Card -->
+            <div class="lg:w-80">
+                <div class="bg-white rounded-2xl p-6 text-gray-800 shadow-xl">
+
+                    <!-- Thumbnail -->
+                    <div class="h-40 bg-indigo-100 rounded-xl mb-4 overflow-hidden">
+                        @if (course().thumbnail) {
+                        <img [src]="course().thumbnail" class="w-full h-full object-cover" />
+                        } @else {
+                        <div class="w-full h-full flex items-center justify-center">
+                            <span class="text-4xl">📚</span>
+                        </div>
+                        }
+                    </div>
+
+                    <!-- Price - only show if NOT enrolled -->
+                    @if (!isEnrolled()) {
+                    <div class="text-center mb-4">
+                        @if (course().price === 0) {
+                        <span class="text-3xl font-bold text-emerald-600">FREE</span>
+                        } @else {
+                        <span class="text-3xl font-bold text-indigo-600">
+                            ₹{{ course().price }}
+                        </span>
+                        }
+                    </div>
+                    }
+
+                    <!-- Action Button -->
+                    @if (isEnrolled()) {
+                    <!-- Already enrolled → Continue Learning -->
+                    <button (click)="goToLearn()"
+                        class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition">
+                        Continue Learning 🚀
+                    </button>
+                    } @else if (course().price === 0) {
+                    <!-- Free course → Enroll for Free -->
+                    <button (click)="enrollFree()" [disabled]="isEnrolling()"
+                        class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition disabled:opacity-50">
+                        @if (isEnrolling()) { Enrolling... }
+                        @else { Enroll for Free 🎓 }
+                    </button>
+                    } @else {
+                    <!-- Paid course → Buy Now -->
+                    <button (click)="payAndEnroll()" [disabled]="isEnrolling()"
+                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition disabled:opacity-50">
+                        @if (isEnrolling()) { Processing... }
+                        @else { Buy Now 💳 }
+                    </button>
+                    }
+
+                    <!-- Features -->
+                    <div class="mt-4 space-y-2 text-sm text-gray-600">
+                        <div class="flex items-center gap-2">
+                            <span>✅</span>
+                            <span>Full lifetime access</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span>✅</span>
+                            <span>Certificate on completion</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span>✅</span>
+                            <span>{{ getTotalLessons() }} lessons</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Content -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Course Content</h2>
+        <p class="text-gray-500 text-sm mb-6">
+            {{ course().sections?.length }} sections • {{ getTotalLessons() }} lessons
+        </p>
+
+        @if (course().sections?.length === 0) {
+        <p class="text-gray-500 text-center py-8">No content yet!</p>
+        } @else {
+        <div class="space-y-3">
+            @for (section of course().sections; track section._id) {
+            <div class="border border-gray-200 rounded-xl overflow-hidden">
+
+                <!-- Section Header -->
+                <button (click)="toggleSection(section._id)"
+                    class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition text-left">
+                    <div class="flex items-center gap-3">
+                        <span class="text-indigo-600">
+                            {{ isSectionExpanded(section._id) ? '▼' : '▶' }}
+                        </span>
+                        <span class="font-semibold text-gray-800">
+                            {{ section.title }}
+                        </span>
+                    </div>
+                    <span class="text-sm text-gray-500">
+                        {{ section.lessons.length }} lessons
+                    </span>
+                </button>
+
+                <!-- Lessons -->
+                @if (isSectionExpanded(section._id)) {
+                <div class="divide-y divide-gray-100">
+                    @for (lesson of section.lessons; track lesson._id) {
+                    <div class="flex items-center gap-3 p-4">
+                        <span class="text-lg">
+                            {{ lesson.type === 'video' ? '🎥' : '📄' }}
+                        </span>
+                        <span class="flex-1 text-sm text-gray-700">
+                            {{ lesson.title }}
+                        </span>
+                        @if (lesson.isPreview) {
+                        <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                            Preview
+                        </span>
+                        } @else if (!isEnrolled()) {
+                        <span class="text-gray-400">🔒</span>
+                        }
+                        <span class="text-xs text-gray-500">
+                            {{ lesson.duration }} min
+                        </span>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+            }
+        </div>
+        }
+    </div>
+
+    <!-- Reviews Section - OUTSIDE lessons loop! -->
+    <!-- Reviews Section - only for enrolled students -->
+    @if (isEnrolled()) {
+    <app-reviews [courseId]="course()._id" />
+    }
+
+    }
+
+</div>

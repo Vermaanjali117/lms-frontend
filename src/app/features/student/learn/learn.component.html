@@ -1,0 +1,215 @@
+<div class="flex h-screen bg-gray-900 overflow-hidden">
+
+    @if (isLoading()) {
+    <div class="flex-1 flex justify-center items-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    } @else if (course()) {
+
+    <!-- Left Sidebar -->
+    <div class="w-80 bg-gray-800 flex flex-col overflow-hidden flex-shrink-0">
+
+        <!-- Header -->
+        <div class="p-4 border-b border-gray-700">
+            <a [routerLink]="['/student/courses', course()._id]"
+                class="text-gray-400 text-sm hover:text-white flex items-center gap-2 mb-3">
+                ← Back to Course
+            </a>
+            <h2 class="text-white font-bold text-sm line-clamp-2">
+                {{ course().title }}
+            </h2>
+            <div class="mt-3">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Progress</span>
+                    <span>{{ progress() }}%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-1.5">
+                    <div class="bg-indigo-500 h-1.5 rounded-full transition-all" [style.width.%]="progress()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sections & Lessons -->
+        <div class="flex-1 overflow-y-auto">
+            @for (section of course().sections; track section._id) {
+            <div>
+                <div class="px-4 py-3 border-b border-gray-700">
+                    <p class="text-gray-300 text-xs font-semibold uppercase tracking-wider">
+                        {{ section.title }}
+                    </p>
+                </div>
+                @for (lesson of section.lessons; track lesson._id) {
+                <button (click)="selectLesson(lesson)"
+                    class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-700 transition text-left border-b border-gray-700/50"
+                    [class.bg-gray-700]="currentLesson()?._id === lesson._id">
+                    <div class="flex-shrink-0">
+                        @if (isCompleted(lesson._id)) {
+                        <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <span class="text-white text-xs">✓</span>
+                        </div>
+                        } @else {
+                        <div class="w-6 h-6 rounded-full border-2 border-gray-500 flex items-center justify-center">
+                            <span class="text-gray-400 text-xs">
+                                {{ lesson.type === 'video' ? '▶' : '📄' }}
+                            </span>
+                        </div>
+                        }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate" [class.text-white]="currentLesson()?._id === lesson._id"
+                            [class.text-gray-300]="currentLesson()?._id !== lesson._id">
+                            {{ lesson.title }}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ lesson.duration }} min</p>
+                    </div>
+                </button>
+                }
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+        @if (currentLesson()) {
+
+        <!-- Video/Content -->
+        @if (!showQuiz()) {
+        @if (currentLesson().type === 'video') {
+        <div class="flex-1 bg-black flex items-center justify-center">
+            @if (isYoutubeUrl(currentLesson().content)) {
+            <iframe [src]="getYoutubeEmbedUrl(currentLesson().content)" class="w-full h-full" frameborder="0"
+                allowfullscreen>
+            </iframe>
+            } @else {
+            <video  [src]="currentLesson().content" controls class="w-full max-h-[70vh]"></video>
+            }
+        </div>
+        }
+        @if (currentLesson().type === 'text') {
+        <div class="flex-1 overflow-y-auto bg-gray-900 p-8">
+            <div class="max-w-3xl mx-auto text-gray-200 leading-relaxed">
+                {{ currentLesson().content }}
+            </div>
+        </div>
+        }
+        }
+
+        <!-- Quiz Section -->
+        @if (showQuiz()) {
+        <div class="flex-1 overflow-y-auto bg-gray-900 p-6">
+            <div class="max-w-3xl mx-auto">
+
+                <!-- Quiz Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-white text-xl font-bold">
+                            🧠 AI Quiz
+                        </h2>
+                        <p class="text-gray-400 text-sm mt-1">
+                            {{ currentLesson().title }}
+                        </p>
+                    </div>
+                    <button (click)="showQuiz.set(false)" class="text-gray-400 hover:text-white transition text-sm">
+                        ← Back to Lesson
+                    </button>
+                </div>
+
+                <!-- Score -->
+                @if (quizSubmitted()) {
+                <div class="mb-6 p-6 rounded-2xl text-center" [class.bg-emerald-900]="quizScore() >= 70"
+                    [class.bg-red-900]="quizScore() < 70">
+                    <p class="text-4xl font-bold text-white">
+                        {{ quizScore() }}%
+                    </p>
+                    <p class="text-lg mt-2" [class.text-emerald-300]="quizScore() >= 70"
+                        [class.text-red-300]="quizScore() < 70">
+                        @if (quizScore() >= 70) {
+                        Excellent! You passed! 🎉
+                        } @else {
+                        Keep practicing! You got this! 💪
+                        }
+                    </p>
+                    <button (click)="retakeQuiz()"
+                        class="mt-4 px-6 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition">
+                        Retake Quiz 🔄
+                    </button>
+                </div>
+                }
+
+                <!-- Questions -->
+                <div class="space-y-6">
+                    @for (question of quiz(); track $index; let qIndex = $index) {
+                    <div class="bg-gray-800 rounded-2xl p-6">
+                        <p class="text-white font-semibold mb-4">
+                            {{ qIndex + 1 }}. {{ question.question }}
+                        </p>
+                        <div class="space-y-3">
+                            @for (option of question.options; track $index; let oIndex = $index) {
+                            <button (click)="selectAnswer(qIndex, oIndex)" [disabled]="quizSubmitted()"
+                                class="w-full text-left px-4 py-3 rounded-xl transition text-sm"
+                                [class.bg-indigo-600]="!quizSubmitted() && selectedAnswers()[qIndex] === oIndex"
+                                [class.text-white]="!quizSubmitted() && selectedAnswers()[qIndex] === oIndex"
+                                [class.bg-gray-700]="!quizSubmitted() && selectedAnswers()[qIndex] !== oIndex"
+                                [class.text-gray-300]="!quizSubmitted() && selectedAnswers()[qIndex] !== oIndex"
+                                [class.bg-emerald-600]="quizSubmitted() && oIndex === question.correctAnswer"
+                                [class.bg-red-600]="quizSubmitted() && selectedAnswers()[qIndex] === oIndex && oIndex !== question.correctAnswer"
+                                [class.bg-gray-700]="quizSubmitted() && oIndex !== question.correctAnswer && selectedAnswers()[qIndex] !== oIndex">
+                                {{ option }}
+                            </button>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+
+                <!-- Submit -->
+                @if (!quizSubmitted()) {
+                <button (click)="submitQuiz()" [disabled]="!allAnswered()"
+                    class="mt-6 w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition disabled:opacity-50">
+                    Submit Quiz ✓
+                </button>
+                }
+            </div>
+        </div>
+        }
+
+        <!-- Footer -->
+        <div class="bg-gray-800 border-t border-gray-700 px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div>
+                <h3 class="text-white font-semibold">{{ currentLesson().title }}</h3>
+                <p class="text-gray-400 text-sm">{{ currentLesson().duration }} minutes</p>
+            </div>
+
+            <div class="flex gap-3">
+
+                <!-- AI Quiz Button -->
+                <button (click)="generateQuiz()" [disabled]="isGeneratingQuiz()"
+                    class="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition disabled:opacity-50 flex items-center gap-2">
+                    @if (isGeneratingQuiz()) {
+                    <span class="animate-spin">⏳</span> Generating...
+                    } @else {
+                    🧠 AI Quiz
+                    }
+                </button>
+
+                <!-- Mark Complete -->
+                @if (isCompleted(currentLesson()._id)) {
+                <div class="flex items-center gap-2 text-emerald-400">
+                    <span>✅</span>
+                    <span class="font-medium text-sm">Completed!</span>
+                </div>
+                } @else {
+                <button (click)="markComplete(currentLesson()._id)"
+                    class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition">
+                    Mark Complete ✓
+                </button>
+                }
+            </div>
+        </div>
+        }
+    </div>
+    }
+</div>
